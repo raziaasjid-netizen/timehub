@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>TimeHub - Online Timer Tools</title>
+<style>
+:root{--bg:#0b1020;--card:#151d33;--card2:#1c2742;--text:#f8fafc;--muted:#9aa8c0;--accent:#38bdf8;--danger:#ef4444;--ok:#22c55e}
+*{box-sizing:border-box}body{margin:0;font-family:Arial,sans-serif;background:linear-gradient(135deg,#07101f,#111827);color:var(--text);min-height:100vh}
+header{padding:24px 18px;text-align:center;border-bottom:1px solid #ffffff12}h1{margin:0;font-size:34px}header p{color:var(--muted);margin:8px 0 0}
+nav{display:flex;gap:8px;overflow:auto;padding:14px;justify-content:center;background:#0a0f1c;position:sticky;top:0;z-index:5}
+nav button{white-space:nowrap}.tab{background:#1b263d;color:white;border:1px solid #ffffff12;border-radius:10px;padding:11px 15px;cursor:pointer}.tab.active{background:var(--accent);color:#00111a}
+main{max-width:1050px;margin:24px auto;padding:0 15px}.panel{display:none;background:var(--card);border:1px solid #ffffff12;border-radius:20px;padding:25px;box-shadow:0 15px 50px #0005}.panel.active{display:block}
+.display{font-size:clamp(48px,11vw,105px);font-weight:700;text-align:center;letter-spacing:2px;font-variant-numeric:tabular-nums;margin:25px 0}
+.controls{text-align:center}.btn{border:0;border-radius:11px;padding:12px 17px;margin:5px;background:#334155;color:white;font-weight:bold;cursor:pointer}.btn:hover{filter:brightness(1.2)}.green{background:var(--ok)}.red{background:var(--danger)}.blue{background:#2563eb}.purple{background:#9333ea}
+.inputs{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin:15px}.inputs input{width:90px;padding:12px;border-radius:9px;border:1px solid #475569;background:#0b1222;color:white;text-align:center;font-size:20px}
+.laps,.list{max-width:600px;margin:20px auto;max-height:260px;overflow:auto}.row{display:flex;justify-content:space-between;padding:10px;border-bottom:1px solid #ffffff12}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px}.box{background:var(--card2);padding:18px;border-radius:15px}.box h3{margin-top:0}
+select,input[type=text]{padding:11px;border-radius:8px;border:1px solid #475569;background:#0b1222;color:white}
+.bigtime{text-align:center;font-size:55px;font-weight:bold;margin:20px}.note{text-align:center;color:var(--muted);font-size:14px}
+@media(max-width:600px){h1{font-size:27px}.panel{padding:17px}.display{font-size:50px}}
+</style>
+</head>
+<body>
+<header><h1>⏱️ TimeHub</h1><p>Free Online Timer & Clock Tools</p></header>
+<nav>
+<button class="tab active" onclick="show('stopwatch',this)">Stopwatch</button>
+<button class="tab" onclick="show('countdown',this)">Countdown</button>
+<button class="tab" onclick="show('alarm',this)">Alarm</button>
+<button class="tab" onclick="show('interval',this)">Interval</button>
+<button class="tab" onclick="show('world',this)">World Clock</button>
+<button class="tab" onclick="show('metronome',this)">Metronome</button>
+<button class="tab" onclick="fullscreen()">⛶ Fullscreen</button>
+</nav>
+<main>
+
+<section id="stopwatch" class="panel active">
+<h2>⏱️ Stopwatch</h2><div id="swDisplay" class="display">00:00:00.00</div>
+<div class="controls"><button class="btn green" onclick="swStart()">▶ Start</button><button class="btn red" onclick="swPause()">⏸ Pause</button><button class="btn blue" onclick="swReset()">↻ Reset</button><button class="btn purple" onclick="swLap()">🏁 Lap</button></div>
+<div id="laps" class="laps"></div><p class="note">Space = Start/Pause · R = Reset · L = Lap</p>
+</section>
+
+<section id="countdown" class="panel">
+<h2>⏳ Countdown Timer</h2>
+<div class="inputs"><input id="cdH" type="number" min="0" value="0" placeholder="Hours"><input id="cdM" type="number" min="0" value="5" placeholder="Min"><input id="cdS" type="number" min="0" value="0" placeholder="Sec"></div>
+<div id="cdDisplay" class="display">00:05:00</div>
+<div class="controls"><button class="btn green" onclick="cdStart()">▶ Start</button><button class="btn red" onclick="cdPause()">⏸ Pause</button><button class="btn blue" onclick="cdReset()">↻ Reset</button><button class="btn purple" onclick="beep()">🔊 Test Sound</button></div>
+<p class="note">Set hours, minutes and seconds, then press Start.</p>
+</section>
+
+<section id="alarm" class="panel">
+<h2>🔔 Alarm Clock</h2>
+<div class="inputs"><input id="alarmTime" type="time"><input id="alarmName" type="text" placeholder="Alarm name"></div>
+<div class="controls"><button class="btn green" onclick="setAlarm()">Set Alarm</button><button class="btn blue" onclick="clearAlarm()">Clear Alarm</button></div>
+<div id="alarmStatus" class="note">No alarm set.</div>
+<div id="clockNow" class="bigtime"></div>
+</section>
+
+<section id="interval" class="panel">
+<h2>🔄 Interval Timer</h2>
+<div class="grid">
+<div class="box"><h3>Work (seconds)</h3><input id="workSec" type="number" value="30" min="1"></div>
+<div class="box"><h3>Rest (seconds)</h3><input id="restSec" type="number" value="10" min="1"></div>
+<div class="box"><h3>Rounds</h3><input id="rounds" type="number" value="5" min="1"></div>
+</div>
+<div id="intDisplay" class="display">00:30</div><div id="intState" class="note">Ready</div>
+<div class="controls"><button class="btn green" onclick="intStart()">▶ Start</button><button class="btn red" onclick="intPause()">⏸ Pause</button><button class="btn blue" onclick="intReset()">↻ Reset</button></div>
+</section>
+
+<section id="world" class="panel">
+<h2>🌍 World Clock</h2><div class="grid">
+<div class="box"><h3>🇵🇰 Pakistan</h3><div id="pk" class="bigtime"></div></div>
+<div class="box"><h3>🇬🇧 London</h3><div id="lon" class="bigtime"></div></div>
+<div class="box"><h3>🇺🇸 New York</h3><div id="ny" class="bigtime"></div></div>
+<div class="box"><h3>🇦🇪 Dubai</h3><div id="dub" class="bigtime"></div></div>
+<div class="box"><h3>🇯🇵 Tokyo</h3><div id="tok" class="bigtime"></div></div>
+</div></section>
+
+<section id="metronome" class="panel">
+<h2>🎵 Metronome</h2><div class="inputs"><input id="bpm" type="number" value="100" min="30" max="240"><label style="padding:12px">BPM</label></div>
+<div id="beat" class="display">♪</div><div class="controls"><button class="btn green" onclick="metroStart()">▶ Start</button><button class="btn red" onclick="metroStop()">⏹ Stop</button></div>
+</section>
+
+</main>
+<script>
+const $=id=>document.getElementById(id);
+function show(id,btn){document.querySelectorAll('.panel').forEach(x=>x.classList.remove('active'));$(id).classList.add('active');document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));btn.classList.add('active')}
+function fullscreen(){if(!document.fullscreenElement)document.documentElement.requestFullscreen();else document.exitFullscreen()}
+
+/* Stopwatch */
+let swRun=false,swStartAt=0,swElapsed=0,swTimer=null,lapN=0;
+function fmt(ms){let cs=Math.floor(ms%1000/10),s=Math.floor(ms/1000)%60,m=Math.floor(ms/60000)%60,h=Math.floor(ms/3600000);return String(h).padStart(2,'0')+':'+String(m).padStart(2,'0')+':'+String(s).padStart(2,'0')+'.'+String(cs).padStart(2,'0')}
+function swUpdate(){swElapsed=Date.now()-swStartAt;$('swDisplay').textContent=fmt(swElapsed)}
+function swStart(){if(swRun)return;swRun=true;swStartAt=Date.now()-swElapsed;swTimer=setInterval(swUpdate,10)}
+function swPause(){if(!swRun)return;swRun=false;clearInterval(swTimer);swUpdate()}
+function swReset(){swPause();swElapsed=0;lapN=0;$('swDisplay').textContent='00:00:00.00';$('laps').innerHTML=''}
+function swLap(){if(!swRun)return;lapN++;$('laps').insertAdjacentHTML('afterbegin',`<div class="row"><span>Lap ${lapN}</span><b>${fmt(swElapsed)}</b></div>`)}
+
+/* Sound */
+let audioCtx;
+function beep(){audioCtx=audioCtx||new (window.AudioContext||window.webkitAudioContext)();let o=audioCtx.createOscillator(),g=audioCtx.createGain();o.frequency.value=880;o.connect(g);g.connect(audioCtx.destination);o.start();g.gain.exponentialRampToValueAtTime(.0001,audioCtx.currentTime+.7);o.stop(audioCtx.currentTime+.7)}
+
+/* Countdown */
+let cdRun=false,cdRemain=0,cdTimer=null;
+function cdRead(){return (+$('cdH').value||0)*3600+(+$('cdM').value||0)*60+(+$('cdS').value||0)}
+function cdFmt(s){let h=Math.floor(s/3600),m=Math.floor(s%3600/60),x=s%60;return String(h).padStart(2,'0')+':'+String(m).padStart(2,'0')+':'+String(x).padStart(2,'0')}
+function cdRender(){$('cdDisplay').textContent=cdFmt(cdRemain)}
+function cdStart(){if(cdRun)return;if(cdRemain<=0)cdRemain=cdRead();if(cdRemain<=0)return;cdRun=true;cdTimer=setInterval(()=>{cdRemain--;cdRender();if(cdRemain<=0){cdPause();beep();alert('⏰ Countdown finished!')}},1000);cdRender()}
+function cdPause(){cdRun=false;clearInterval(cdTimer)}
+function cdReset(){cdPause();cdRemain=cdRead();cdRender()}
+
+/* Alarm + clock */
+let alarm=null;
+function setAlarm(){let t=$('alarmTime').value;if(!t)return;alarm=t;$('alarmStatus').textContent='Alarm set for '+t+($('alarmName').value?' — '+$('alarmName').value:'')}
+function clearAlarm(){alarm=null;$('alarmStatus').textContent='No alarm set.'}
+function tickClock(){let d=new Date();$('clockNow').textContent=d.toLocaleTimeString();if(alarm===d.toTimeString().slice(0,5)){beep();alert('🔔 Alarm! '+($('alarmName').value||''));alarm=null;$('alarmStatus').textContent='Alarm finished.'}
+const opts={hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false};$('pk').textContent=new Intl.DateTimeFormat('en-US',{...opts,timeZone:'Asia/Karachi'}).format(d);$('lon').textContent=new Intl.DateTimeFormat('en-US',{...opts,timeZone:'Europe/London'}).format(d);$('ny').textContent=new Intl.DateTimeFormat('en-US',{...opts,timeZone:'America/New_York'}).format(d);$('dub').textContent=new Intl.DateTimeFormat('en-US',{...opts,timeZone:'Asia/Dubai'}).format(d);$('tok').textContent=new Intl.DateTimeFormat('en-US',{...opts,timeZone:'Asia/Tokyo'}).format(d)}
+setInterval(tickClock,1000);tickClock();
+
+/* Interval */
+let intRun=false,intTimer=null,intPhase='work',intRemain=30,intRound=1;
+function intRender(){$('intDisplay').textContent='00:'+String(intRemain).padStart(2,'0');$('intState').textContent=(intPhase==='work'?'WORK':'REST')+' — Round '+intRound}
+function intStart(){if(intRun)return;if(intRound>+$('rounds').value){intReset()}if(!intRemain)intRemain=intPhase==='work'?+$('workSec').value:+$('restSec').value;intRun=true;intTimer=setInterval(()=>{intRemain--;intRender();if(intRemain<=0){beep();if(intPhase==='work'){intPhase='rest';intRemain=+$('restSec').value}else{intRound++;if(intRound>+$('rounds').value){intStop();alert('🎉 Interval complete!');return}intPhase='work';intRemain=+$('workSec').value}}},1000);intRender()}
+function intPause(){intRun=false;clearInterval(intTimer)}
+function intStop(){intPause();intRound=1;intPhase='work';intRemain=+$('workSec').value;intRender()}
+function intReset(){intStop()}
+
+/* Metronome */
+let metro=null;
+function metroStart(){metroStop();let bpm=Math.max(30,Math.min(240,+$('bpm').value||100));metro=setInterval(()=>{beep();$('beat').textContent=$('beat').textContent==='♪'?'●':'♪'},60000/bpm)}
+function metroStop(){clearInterval(metro);metro=null;$('beat').textContent='♪'}
+document.addEventListener('keydown',e=>{if(e.code==='Space'){e.preventDefault();if($('stopwatch').classList.contains('active'))swRun?swPause():swStart()}if(e.key.toLowerCase()==='r')swReset();if(e.key.toLowerCase()==='l')swLap()});
+</script>
+</body>
+</html>
